@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#c084fc">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wallpaper">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Wallpaper Resizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a24;
+    --accent: #c084fc;
+    --accent2: #818cf8;
+    --text: #f0f0ff;
+    --muted: #6b6b8a;
+    --border: #2a2a3a;
+    --success: #4ade80;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 0 0 80px;
+    overflow-x: hidden;
+  }
+
+  /* Top bar */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .topbar h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .topbar .badge {
+    background: rgba(192,132,252,0.12);
+    border: 1px solid rgba(192,132,252,0.25);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* Sections */
+  .section {
+    padding: 16px;
+  }
+
+  .sec-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    padding-left: 2px;
+  }
+
+  /* Mode pills */
+  .mode-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .mode-pill {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.18s;
+    user-select: none;
+  }
+
+  .mode-pill.active {
+    border-color: var(--accent);
+    background: rgba(192,132,252,0.08);
+  }
+
+  .mode-pill .icon { font-size: 1.6rem; display: block; margin-bottom: 4px; }
+  .mode-pill .label { font-size: 0.82rem; font-weight: 600; font-family: 'Syne', sans-serif; color: var(--text); display: block; }
+  .mode-pill .sub { font-size: 0.7rem; color: var(--muted); display: block; margin-top: 2px; }
+  .mode-pill.active .label { color: var(--accent); }
+
+  /* Resolution select */
+  .res-select {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    appearance: none;
+    outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b8a' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    cursor: pointer;
+  }
+
+  .custom-res {
+    display: none;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .custom-res.show { display: flex; }
+
+  .custom-res input {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 12px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    outline: none;
+    width: 100%;
+  }
+
+  .custom-res input:focus { border-color: var(--accent); }
+
+  /* Drop zone */
+  .dropzone {
+    background: var(--card);
+    border: 2px dashed var(--border);
+    border-radius: 18px;
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    margin-bottom: 14px;
+  }
+
+  .dropzone.active {
+    border-color: var(--accent);
+    background: rgba(192,132,252,0.06);
+  }
+
+  .dropzone input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  .dropzone .dz-icon { font-size: 2.8rem; display: block; margin-bottom: 10px; }
+  .dropzone .dz-text { font-size: 1rem; font-weight: 600; font-family: 'Syne', sans-serif; }
+  .dropzone .dz-sub { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+  /* Process button */
+  .btn-main {
+    width: calc(100% - 32px);
+    margin: 0 16px;
+    padding: 17px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 16px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: all 0.2s;
+    display: none;
+    position: fixed;
+    bottom: 16px;
+    left: 0;
+    box-shadow: 0 4px 24px rgba(192,132,252,0.4);
+    z-index: 50;
+  }
+
+  .btn-main.visible { display: block; }
+  .btn-main:active { transform: scale(0.97); }
+
+  /* Queue */
+  .queue-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    animation: slideIn 0.25s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .queue-thumb {
+    width: 36px;
+    height: 64px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .queue-info { flex: 1; min-width: 0; }
+  .queue-name { font-size: 0.8rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .queue-status { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .queue-status.done { color: var(--success); }
+
+  .progress-bar { height: 3px; background: var(--border); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; width: 0%; transition: width 0.3s; }
+
+  .btn-dl {
+    background: rgba(192,132,252,0.15);
+    border: 1px solid rgba(192,132,252,0.3);
+    border-radius: 10px;
+    padding: 9px 12px;
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    font-family: 'Syne', sans-serif;
+    flex-shrink: 0;
+  }
+
+  /* Install banner */
+  .install-banner {
+    background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(129,140,248,0.1));
+    border: 1px solid rgba(192,132,252,0.25);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    display: none;
+  }
+
+  .install-banner.show { display: flex; }
+  .install-banner .ib-icon { font-size: 1.6rem; flex-shrink: 0; }
+  .install-banner .ib-text { flex: 1; }
+  .install-banner .ib-title { font-size: 0.85rem; font-weight: 700; font-family: 'Syne', sans-serif; color: var(--accent); }
+  .install-banner .ib-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .install-banner .ib-btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 8px 12px; font-size: 0.75rem; font-weight: 700; cursor: pointer; font-family: 'Syne', sans-serif; flex-shrink: 0; }
+
+  canvas { display: none; }
+
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .empty-state .es-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📱 Wallpaper Resizer</h1>
+  <div class="badge">Moto G52</div>
+</div>
+
+<div class="section">
+  <!-- Install banner -->
+  <div class="install-banner" id="installBanner">
+    <div class="ib-icon">⬇️</div>
+    <div class="ib-text">
+      <div class="ib-title">Instalar como app</div>
+      <div class="ib-sub">Úsala sin abrir el navegador</div>
+    </div>
+    <button class="ib-btn" id="installBtn">Instalar</button>
+  </div>
+
+  <div class="sec-label">Modo de ajuste</div>
+  <div class="mode-row">
+    <div class="mode-pill active" id="opt-fill" onclick="setMode('fill')">
+      <span class="icon">⛶</span>
+      <span class="label">Sin bordes</span>
+      <span class="sub">Recorta los lados</span>
+    </div>
+    <div class="mode-pill" id="opt-fit" onclick="setMode('fit')">
+      <span class="icon">◻</span>
+      <span class="label">Completa</span>
+      <span class="sub">Barras negras</span>
+    </div>
+  </div>
+
+  <div class="sec-label">Resolución</div>
+  <select class="res-select" id="resSelect">
+    <option value="1080x2400">📱 Moto G52 — 1080×2400</option>
+    <option value="1080x2340">Samsung/Xiaomi — 1080×2340</option>
+    <option value="1080x2280">1080×2280 (19:9)</option>
+    <option value="1080x1920">1080×1920 (16:9)</option>
+    <option value="custom">✏️ Personalizado…</option>
+  </select>
+
+  <div class="custom-res" id="customRes">
+    <div style="flex:1">
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px;">Ancho</div>
+      <input type="number" id="customW" placeholder="1080" inputmode="numeric">
+    </div>
+    <div style="flex:1">
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px;">Alto</div>
+      <input type="number" id="customH" placeholder="2400" inputmode="numeric">
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="sec-label">Seleccionar imágenes</div>
+  <div class="dropzone" id="dropzone">
+    <input type="file" id="fileInput" accept="image/*" multiple>
+    <span class="dz-icon">🖼️</span>
+    <div class="dz-text">Toca para elegir imágenes</div>
+    <div class="dz-sub">JPG · PNG · WEBP · Varias a la vez</div>
+  </div>
+</div>
+
+<div class="section" id="queueSection">
+  <div class="sec-label" id="queueLabel" style="display:none">Resultados</div>
+  <div id="queue">
+    <div class="empty-state" id="emptyState">
+      <span class="es-icon">✨</span>
+      Selecciona imágenes para empezar
+    </div>
+  </div>
+</div>
+
+<button class="btn-main" id="btnProcess" onclick="processAll()">⚡ Procesar y descargar</button>
+
+<canvas id="workCanvas"></canvas>
+
+<script>
+let mode = 'fill';
+let files = [];
+let targetW = 1080, targetH = 2400;
+let deferredPrompt = null;
+
+// PWA install prompt
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') {
+    document.getElementById('installBanner').classList.remove('show');
+  }
+  deferredPrompt = null;
+});
+
+// Service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// Resolution
+const resSelect = document.getElementById('resSelect');
+const customRes = document.getElementById('customRes');
+
+resSelect.addEventListener('change', () => {
+  if (resSelect.value === 'custom') {
+    customRes.classList.add('show');
+  } else {
+    customRes.classList.remove('show');
+    const [w, h] = resSelect.value.split('x').map(Number);
+    targetW = w; targetH = h;
+  }
+});
+
+document.getElementById('customW').addEventListener('input', updateCustom);
+document.getElementById('customH').addEventListener('input', updateCustom);
+
+function updateCustom() {
+  const w = parseInt(document.getElementById('customW').value);
+  const h = parseInt(document.getElementById('customH').value);
+  if (w > 0 && h > 0) { targetW = w; targetH = h; }
+}
+
+// Mode
+function setMode(m) {
+  mode = m;
+  document.getElementById('opt-fill').classList.toggle('active', m === 'fill');
+  document.getElementById('opt-fit').classList.toggle('active', m === 'fit');
+}
+
+// File input
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('active'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('active'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('active');
+  handleFiles([...e.dataTransfer.files].filter(f => f.type.startsWith('image/')));
+});
+
+fileInput.addEventListener('change', () => {
+  handleFiles([...fileInput.files]);
+  fileInput.value = '';
+});
+
+function handleFiles(newFiles) {
+  if (!newFiles.length) return;
+  files = [...files, ...newFiles];
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('queueLabel').style.display = 'block';
+  document.getElementById('btnProcess').classList.add('visible');
+}
+
+// Process
+async function processAll() {
+  if (!files.length) return;
+  const btn = document.getElementById('btnProcess');
+  btn.disabled = true;
+  btn.textContent = '⏳ Procesando…';
+
+  const toProcess = [...files];
+  files = [];
+
+  for (let i = 0; i < toProcess.length; i++) {
+    await processFile(toProcess[i]);
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✅ ¡Todo listo!';
+  setTimeout(() => {
+    btn.classList.remove('visible');
+    btn.textContent = '⚡ Procesar y descargar';
+  }, 2500);
+}
+
+function getTransform(imgW, imgH, canW, canH) {
+  const imgRatio = imgH / imgW;
+  const canRatio = canH / canW;
+
+  if (mode === 'fill') {
+    if (imgRatio >= canRatio) {
+      const scale = canW / imgW;
+      return { sx: 0, sy: ((imgH * scale) - canH) / 2 / scale, sw: imgW, sh: canH / scale, dx: 0, dy: 0, dw: canW, dh: canH };
+    } else {
+      const scale = canH / imgH;
+      return { sx: ((imgW * scale) - canW) / 2 / scale, sy: 0, sw: canW / scale, sh: imgH, dx: 0, dy: 0, dw: canW, dh: canH };
+    }
+  } else {
+    if (imgRatio >= canRatio) {
+      const scale = canH / imgH;
+      const nw = imgW * scale;
+      return { sx: 0, sy: 0, sw: imgW, sh: imgH, dx: (canW - nw) / 2, dy: 0, dw: nw, dh: canH };
+    } else {
+      const scale = canW / imgW;
+      const nh = imgH * scale;
+      return { sx: 0, sy: 0, sw: imgW, sh: imgH, dx: 0, dy: (canH - nh) / 2, dw: canW, dh: nh };
+    }
+  }
+}
+
+function processFile(file) {
+  return new Promise(resolve => {
+    const id = `qi-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const item = document.createElement('div');
+    item.className = 'queue-item';
+    item.id = id;
+    item.innerHTML = `
+      <img class="queue-thumb" id="th-${id}">
+      <div class="queue-info">
+        <div class="queue-name">${file.name}</div>
+        <div class="queue-status" id="st-${id}">Procesando…</div>
+        <div class="progress-bar"><div class="progress-fill" id="pr-${id}"></div></div>
+      </div>
+    `;
+    const queue = document.getElementById('queue');
+    queue.insertBefore(item, queue.firstChild);
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById(`th-${id}`).src = e.target.result;
+      document.getElementById(`pr-${id}`).style.width = '40%';
+
+      const img = new Image();
+      img.onload = () => {
+        document.getElementById(`pr-${id}`).style.width = '75%';
+
+        const canvas = document.getElementById('workCanvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, targetW, targetH);
+
+        const t = getTransform(img.width, img.height, targetW, targetH);
+        ctx.drawImage(img, t.sx, t.sy, t.sw, t.sh, t.dx, t.dy, t.dw, t.dh);
+
+        document.getElementById(`pr-${id}`).style.width = '95%';
+
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const name = file.name.replace(/\.[^.]+$/, '') + `_${targetW}x${targetH}.jpg`;
+
+          document.getElementById(`pr-${id}`).style.width = '100%';
+          document.getElementById(`st-${id}`).textContent = '✓ Listo para descargar';
+          document.getElementById(`st-${id}`).className = 'queue-status done';
+
+          const dl = document.createElement('a');
+          dl.className = 'btn-dl';
+          dl.href = url;
+          dl.download = name;
+          dl.textContent = '⬇ Guardar';
+          item.appendChild(dl);
+
+          // Auto-click download on mobile
+          dl.click();
+
+          resolve();
+        }, 'image/jpeg', 0.95);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+</script>
+</body>
+</html>
